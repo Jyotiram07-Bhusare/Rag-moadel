@@ -1,0 +1,16 @@
+# Local vector database:  docker compose up -d
+# Then run the backend with:  DATABASE_URL=postgres://lessonloop:lessonloop@localhost:5432/lessonloop
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: lessonloop
+      POSTGRES_PASSWORD: lessonloop
+      POSTGRES_DB: lessonloop
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - dbdata:/var/lib/postgresql/data
+volumes:
+  dbdata:

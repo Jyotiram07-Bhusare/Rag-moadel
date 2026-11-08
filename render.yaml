@@ -1,0 +1,22 @@
+# Render Blueprint: backend (Java) + database (Postgres with pgvector) + frontend (static site)
+databases:
+  - name: lessonloop-db
+    plan: free
+
+services:
+  - type: web
+    name: lessonloop-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lessonloop-db
+          property: connectionString
+
+  - type: web
+    name: lessonloop-frontend
+    runtime: static
+    staticPublishPath: ./frontend

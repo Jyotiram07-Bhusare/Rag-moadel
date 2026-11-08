@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LessonLoop · Self-evaluating lesson generator</title>
+  <meta name="description" content="An agentic generate → evaluate → regenerate loop that writes a beginner lesson, judges it against hard pass/fail checks, and ships only what passes.">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%237c83ff'/%3E%3Cpath d='M9 16a7 7 0 0 1 12-5m2 5a7 7 0 0 1-12 5' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M21 7v4h-4M11 25v-4h4' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('lessonloop.theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#run" data-nav="run" aria-label="LessonLoop home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="url(#bg)"/>
+          <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c83ff"/><stop offset="1" stop-color="#b17cff"/></linearGradient></defs>
+          <path d="M9 16a7 7 0 0 1 12-5m2 5a7 7 0 0 1-12 5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M21 7v4h-4M11 25v-4h4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="brand-text"><b>LessonLoop</b><small>Self-evaluating lesson generator</small></span>
+      </a>
+
+      <nav class="tabs" aria-label="Sections">
+        <button data-nav="run" aria-current="page">Run</button>
+        <button data-nav="lesson">Final lesson</button>
+        <button data-nav="log">Rejection log <span class="count" id="log-count" hidden>0</span></button>
+        <button data-nav="lab">Evaluator lab</button>
+        <button data-nav="rubric">Rubric</button>
+        <button data-nav="memory">Memory <span class="count" id="mem-count" hidden>0</span></button>
+        <button data-nav="design">How it works</button>
+      </nav>
+
+      <div class="top-actions">
+        <button class="pill" id="engine-pill" title="Engine settings"><span class="dot"></span><span id="engine-label">Demo engine</span></button>
+        <button class="icon-btn" id="theme-btn" aria-label="Switch light / dark theme" title="Switch theme">
+          <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+          <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- ============ RUN ============ -->
+    <section class="view" id="view-run" data-view="run">
+      <div class="hero">
+        <p class="eyebrow">GenAI Engineer · Content Systems</p>
+        <h1>Generate. Evaluate. <span class="grad">Regenerate.</span><br>Ship only what passes.</h1>
+        <p class="lead">An agentic loop that writes a beginner lesson, judges it against <strong>14 hard pass/fail checks</strong>, and rewrites it with the reasons until it clears the bar. A human sees it only after it passes.</p>
+      </div>
+
+      <div class="grid-run">
+        <div class="col-main">
+          <form class="card controls" id="run-form" autocomplete="off">
+            <div class="field">
+              <label for="topic">Topic</label>
+              <input class="input" id="topic" name="topic" type="text" value="Introduction to RAG" maxlength="120" required aria-describedby="topic-hint">
+              <p class="hint" id="topic-hint"></p>
+            </div>
+            <div class="audience" aria-label="Target learner">
+              <span class="chip">🎓 12th-pass graduate, India</span>
+              <span class="chip">🗣️ Simple English</span>
+              <span class="chip">🌱 Starts from zero</span>
+            </div>
+
+            <div class="options">
+              <div class="field">
+                <span class="label" id="lbl-retries">Max retries</span>
+                <div class="seg" role="group" aria-labelledby="lbl-retries" id="seg-retries">
+                  <button type="button" data-val="1" aria-pressed="false">1</button>
+                  <button type="button" data-val="2" aria-pressed="true">2</button>
+                </div>
+              </div>
+              <div class="field">
+                <span class="label" id="lbl-speed">Speed</span>
+                <div class="seg" role="group" aria-labelledby="lbl-speed" id="seg-speed">
+                  <button type="button" data-val="slow" aria-pressed="false" title="Slower pace, easier to narrate in a video">Slow</button>
+                  <button type="button" data-val="normal" aria-pressed="true">Normal</button>
+                  <button type="button" data-val="fast" aria-pressed="false">Fast</button>
+                </div>
+              </div>
+              <label class="switch" title="When on, rules learned from past failures are added to the generator prompt">
+                <input type="checkbox" id="use-memory" checked>
+                <span class="track"><span class="thumb"></span></span>
+                <span class="switch-text"><b>Use memory</b><small id="memory-hint">0 learned rules</small></span>
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary lg" type="submit" id="run-btn">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.8v14.4a.8.8 0 0 0 1.2.7l11.5-7.2a.8.8 0 0 0 0-1.4L8.2 4.1A.8.8 0 0 0 7 4.8z"/></svg>
+                <span id="run-btn-label">Run pipeline</span>
+              </button>
+              <button class="btn ghost" type="button" id="stop-btn" hidden>Stop</button>
+              <button class="btn ghost" type="button" id="reset-btn" hidden>Clear run</button>
+              <span class="hint kbd-hint">⌘ / Ctrl + Enter</span>
+            </div>
+          </form>
+
+          <div class="card stepper-card">
+            <div id="stepper" class="stepper" aria-hidden="true"></div>
+            <p id="statusline" class="statusline" role="status" aria-live="polite">Ready. Press <b>Run pipeline</b> to start the loop.</p>
+          </div>
+
+          <div id="attempts" class="attempts"></div>
+        </div>
+
+        <aside class="col-side">
+          <div class="card" id="scoreboard"></div>
+          <div class="card" id="draft"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============ FINAL LESSON ============ -->
+    <section class="view" id="view-lesson" data-view="lesson" hidden>
+      <div id="lesson-root"></div>
+    </section>
+
+    <!-- ============ REJECTION LOG ============ -->
+    <section class="view" id="view-log" data-view="log" hidden>
+      <div id="log-root"></div>
+    </section>
+
+    <!-- ============ EVALUATOR LAB ============ -->
+    <section class="view" id="view-lab" data-view="lab" hidden>
+      <div class="page-head">
+        <p class="eyebrow">Prove the evaluator works</p>
+        <h2>Evaluator lab</h2>
+        <p class="lead">Inject a deliberate error into a passing lesson and watch the evaluator catch it. You can also edit the text by hand and re-run the judge.</p>
+      </div>
+      <div class="grid-lab">
+        <div class="card lab-editor">
+          <div class="lab-toolbar">
+            <label class="sr-only" for="inject-select">Error to inject</label>
+            <select class="input select" id="inject-select"></select>
+            <button class="btn danger" id="inject-btn" type="button">Inject error</button>
+            <button class="btn ghost" id="lab-reset" type="button" title="Put back the original passing lesson">Reset text</button>
+          </div>
+          <label class="sr-only" for="lab-text">Lesson text (markdown)</label>
+          <textarea id="lab-text" class="lab-text" spellcheck="false"></textarea>
+          <div class="lab-foot">
+            <span class="hint" id="lab-meta"></span>
+            <button class="btn primary" id="lab-run" type="button">Run evaluator</button>
+          </div>
+        </div>
+        <div class="card lab-results" id="lab-results" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ============ RUBRIC ============ -->
+    <section class="view" id="view-rubric" data-view="rubric" hidden>
+      <div class="page-head">
+        <p class="eyebrow">The bar</p>
+        <h2>The rubric: 14 hard checkpoints</h2>
+        <p class="lead">Every check is <b>pass or fail</b>. No scores, no partial credit. A lesson ships only when <b>all 14 pass</b>.</p>
+      </div>
+      <div id="rubric-root" class="rubric-grid"></div>
+    </section>
+
+    <!-- ============ MEMORY ============ -->
+    <section class="view" id="view-memory" data-view="memory" hidden>
+      <div id="memory-root"></div>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="view" id="view-design" data-view="design" hidden>
+      <div class="page-head">
+        <p class="eyebrow">Architecture & reasoning</p>
+        <h2>How the system works, and why</h2>
+        <p class="lead">One loop, one rule: nothing reaches a learner until an independent judge has said <i>pass</i> on every check.</p>
+      </div>
+
+      <div class="card diagram-card">
+        <svg viewBox="0 0 960 360" class="diagram" role="img" aria-label="Flow diagram: Input goes to Generator, then Evaluator, then a decision. If all checks pass the lesson ships. If not, and retries remain, reasons are sent back to the Generator. If the retry cap is hit, the lesson is held for human review. Memory records failures and feeds learned rules back to the Generator.">
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1l8 4-8 4z" class="arrowhead"/></marker>
+          </defs>
+
+          <!-- memory -->
+          <rect class="d-box mem" x="400" y="30" width="240" height="64" rx="14"/>
+          <text class="d-t" x="520" y="58" text-anchor="middle">MEMORY</text>
+          <text class="d-s" x="520" y="77" text-anchor="middle">failure counts → learned rules</text>
+          <path class="d-line" d="M520 190V96" marker-end="url(#arr)"/>
+          <text class="d-s" x="510" y="150" text-anchor="end">log failures</text>
+          <path class="d-line" d="M400 62H280V188" marker-end="url(#arr)"/>
+          <text class="d-s" x="340" y="52" text-anchor="middle">learned rules</text>
+
+          <!-- pipeline -->
+          <rect class="d-box" x="10" y="190" width="120" height="64" rx="14"/>
+          <text class="d-t" x="70" y="218" text-anchor="middle">INPUT</text>
+          <text class="d-s" x="70" y="237" text-anchor="middle">topic</text>
+
+          <rect class="d-box accent" x="190" y="190" width="180" height="64" rx="14"/>
+          <text class="d-t" x="280" y="218" text-anchor="middle">GENERATOR</text>
+          <text class="d-s" x="280" y="237" text-anchor="middle">LLM · prompt · rules</text>
+
+          <rect class="d-box accent" x="430" y="190" width="180" height="64" rx="14"/>
+          <text class="d-t" x="520" y="218" text-anchor="middle">EVALUATOR</text>
+          <text class="d-s" x="520" y="237" text-anchor="middle">14 pass / fail checks</text>
+
+          <path class="d-box dec" d="M700 178 L760 222 L700 266 L640 222 Z"/>
+          <text class="d-t" x="700" y="226" text-anchor="middle">all pass?</text>
+
+          <rect class="d-box ok" x="850" y="130" width="100" height="64" rx="14"/>
+          <text class="d-t" x="900" y="158" text-anchor="middle">SHIP</text>
+          <text class="d-s" x="900" y="177" text-anchor="middle">lesson + log</text>
+
+          <rect class="d-box warn" x="850" y="250" width="100" height="64" rx="14"/>
+          <text class="d-t" x="900" y="278" text-anchor="middle">HOLD</text>
+          <text class="d-s" x="900" y="297" text-anchor="middle">human review</text>
+
+          <path class="d-line" d="M130 222H188" marker-end="url(#arr)"/>
+          <path class="d-line" d="M370 222H428" marker-end="url(#arr)"/>
+          <path class="d-line" d="M610 222H638" marker-end="url(#arr)"/>
+          <path class="d-line" d="M760 222H800"/>
+          <path class="d-line ok" d="M800 222V162H848" marker-end="url(#arr)"/>
+          <text class="d-s" x="806" y="196">all pass</text>
+          <path class="d-line warn" d="M800 222V282H848" marker-end="url(#arr)"/>
+          <text class="d-s" x="806" y="262">cap hit</text>
+
+          <!-- retry loop -->
+          <path class="d-line loop" d="M700 266V322H280V256" marker-end="url(#arr)"/>
+          <text class="d-s" x="490" y="342" text-anchor="middle">fail and retries left → send the reasons back (max 2 retries, so the loop always ends)</text>
+        </svg>
+      </div>
+
+      <h3 class="section-title">Design decisions</h3>
+      <div class="decisions">
+        <article class="card decision"><span class="d-ico">✅</span><h4>Binary checks, not 1–10 scores</h4>
+          <p>Scores drift and models hedge around 7/10. A pass/fail check forces a decision and produces a precise reason that can be fed straight back to the generator.</p></article>
+        <article class="card decision"><span class="d-ico">⛔</span><h4>A hard cap on retries</h4>
+          <p>Max 1–2 retries means the loop always terminates and cost is bounded. If the cap is hit, the lesson is <b>held for human review</b>. It is never shipped by default.</p></article>
+        <article class="card decision"><span class="d-ico">⚖️</span><h4>Two-layer judge</h4>
+          <p>Rules measure what is measurable (sentence length, defined terms, structure): cheap and repeatable. An LLM judge covers meaning (accuracy, analogy quality), using a <i>different</i> model at temperature 0.</p></article>
+        <article class="card decision"><span class="d-ico">🎯</span><h4>Feed back reasons and quotes</h4>
+          <p>The retry prompt names the failing check and quotes the offending sentence, and says "keep the rest". This cuts regressions. The log shows when a retry fixes one thing but breaks another.</p></article>
+        <article class="card decision"><span class="d-ico">🧠</span><h4>Memory makes it self-evolving</h4>
+          <p>Every failure is counted across runs. When a check fails repeatedly, a rule is promoted into the generator prompt. Run 3 starts better than run 1. Human feedback is stored too.</p></article>
+        <article class="card decision"><span class="d-ico">🔌</span><h4>Frontend and engine are decoupled</h4>
+          <p>The UI only reads a small event stream. Swap the demo engine for LangGraph, n8n or a Python API without touching the interface.</p></article>
+        <article class="card decision"><span class="d-ico">⚠️</span><h4>Trade-offs we accept</h4>
+          <p>Rule checks can be shallow: a bolded word is not proof of understanding. Strict rubrics cost more retries. We reduce this with the LLM judge, human spot-checks, and tuning from the failure stats.</p></article>
+        <article class="card decision"><span class="d-ico">🪞</span><h4>Honest demo mode</h4>
+          <p>The demo engine has no LLM: its drafts are pre-written, some with planted flaws. But the evaluator really reads the text, so a lesson edited in the lab fails for real reasons. Learned rules make the demo's first draft cleaner, the way a real LLM would respond to them.</p></article>
+      </div>
+
+      <h3 class="section-title">Connect a real backend</h3>
+      <div class="card contract">
+        <p>Set the backend URL in <b>Engine settings</b> (top right). The UI will <code>POST /api/run</code> and read Server-Sent Events, one JSON object per <code>data:</code> line:</p>
+        <pre class="code"><code>POST /api/run   { "topic", "max_retries", "use_memory", "memory": { "rules", "notes" } }
+
+data: {"type":"run_start","runId":"r1","topic":"…","maxAttempts":3,"rules":[],"notes":[]}
+data: {"type":"attempt_start","attempt":1,"prompt":"…"}
+data: {"type":"lesson","attempt":1,"markdown":"# …"}
+data: {"type":"check","attempt":1,"check":{"id":"ACC-2","pass":false,"reason":"…","evidence":"…"}}
+data: {"type":"attempt_end","attempt":1,"passed":false,"score":8,"total":14,"failed":["ACC-2","…"]}
+data: {"type":"feedback","attempt":1,"feedback":[{"id":"ACC-2","reason":"…","evidence":"…"}]}
+data: {"type":"run_end","status":"shipped","attempts":3,"markdown":"# …"}
+
+GET /health  → 200</code></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span>LessonLoop · built for the GenAI Engineer (Content Systems) take-home</span>
+    <span>Memory is stored in your browser (localStorage)</span>
+  </footer>
+
+  <!-- ============ ENGINE SETTINGS ============ -->
+  <dialog id="settings" class="dialog" aria-labelledby="settings-title">
+    <form method="dialog" class="dialog-body" id="settings-form">
+      <h3 id="settings-title">Engine settings</h3>
+      <p class="muted">Choose where the generate → evaluate → regenerate loop runs.</p>
+
+      <div class="radio-cards" role="radiogroup" aria-label="Engine">
+        <label class="radio-card">
+          <input type="radio" name="engine" value="demo" checked>
+          <span><b>Demo engine</b><small>Runs fully in your browser. No API key, no server. The evaluator really reads the text.</small></span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="engine" value="remote">
+          <span><b>Live backend</b><small>Your Python / LangGraph / n8n service. See the event contract in “How it works”.</small></span>
+        </label>
+      </div>
+
+      <div class="field" id="backend-field">
+        <label for="backend-url">Backend URL</label>
+        <div class="row">
+          <input class="input" id="backend-url" type="url" placeholder="http://localhost:8000">
+          <button class="btn ghost" type="button" id="test-backend">Test</button>
+        </div>
+        <p class="hint" id="backend-status"></p>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn primary" value="save" id="settings-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="js/rubric.js"></script>
+  <script src="js/lesson.js"></script>
+  <script src="js/evaluator.js"></script>
+  <script src="js/markdown.js"></script>
+  <script src="js/memory.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
