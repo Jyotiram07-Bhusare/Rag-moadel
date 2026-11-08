@@ -658,23 +658,21 @@
   /* ================= sending messages ================= */
   const GREETING = /^(hi+|hello+|hey+|hola|namaste|yo|help|thanks|thank you|thx|who are you\??|what can you do\??|what is this\??)[\s!.?]*$/i;
 
+  // "RAG" as a whole word, or its full name. Words that only start with "rag" (rage, ragged) do not count.
+  const RAG_TOPIC = /\brags?\b|retrieval[\s-]*augmented/i;
+  const RAG_ONLY_REPLY = 'Please ask me about only RAG model.';
+
   function quickReply(text) {
-    const demo = state.engine.engine === 'demo';
+    // The demo chat is about RAG only: anything else, even "hi", gets this one short line.
+    if (state.engine.engine === 'demo') return RAG_TOPIC.test(text) ? null : { text: RAG_ONLY_REPLY };
     if (GREETING.test(text)) {
       return {
         text: [
           'Hi! I’m **LessonLoop**. Tell me a topic and I’ll write a short beginner lesson for a 12th-pass student.',
           'Before you see it, I check every draft against **14 pass or fail rules**: facts, simple words, examples, jargon, coverage and flow. If a draft fails, I rewrite it with the reasons until it passes.',
-          demo ? `This demo only has content for **${DEFAULT_TOPIC}**. Connect a live backend in Settings to learn anything.` : 'What would you like to learn?',
+          'What would you like to learn?',
         ].join('\n\n'),
-        suggest: suggestions().slice(0, demo ? 1 : 3),
-      };
-    }
-    if (demo && !/\b(rag|retrieval)/i.test(text)) {
-      return {
-        text: `The built-in demo only has lesson content for **${DEFAULT_TOPIC}**, so I can’t write about “${shorten(text, 80)}” yet.\n\nConnect a live backend in Settings to learn any topic. Or try the RAG lesson to watch the full write, check and rewrite loop.`,
-        suggest: [DEFAULT_TOPIC],
-        buttons: [{ label: 'Open settings', action: 'open-settings', tab: 'general' }],
+        suggest: suggestions().slice(0, 3),
       };
     }
     return null;

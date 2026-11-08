@@ -35,5 +35,8 @@ With the vector database: `cd ../db && docker compose up -d`, then
 `render.yaml` at the repo root creates the Java backend (Docker), a Postgres database (pgvector) and the static frontend.
 Then open the chat → Settings → General → Live backend and paste the backend URL.
 
+## Staying awake on Render's free plan
+`KeepAlive.java` calls the service's own public `/health` address every 5 minutes (from Render's `RENDER_EXTERNAL_URL`), so the free plan's 15-minute sleep never starts. On a laptop that variable is missing and nothing happens. `KEEP_ALIVE=off` turns it off; `KEEP_ALIVE_EVERY_MS` and `KEEP_ALIVE_FIRST_MS` change the timing.
+
 ## Not built yet
 `POST /api/run` (the generate → evaluate → regenerate lesson loop) is not in this backend. The answers are built from the file's own sentences plus built-in simple text, not written by an LLM. The embedder is a local hashing embedder; swap `Embedder.embed()` for a real embedding model later (keep the size equal to `vector(256)` or change both).

@@ -38,6 +38,7 @@ git push -u origin main
 - Backend logs should say `connected to Postgres: using pgvector`. If they say `using the in-memory vector store`, `DATABASE_URL` is missing or the database is not ready.
 
 ## Good to know (free plan)
-- A free web service sleeps when idle, so the first request after a break can take about a minute.
+- A free web service sleeps after 15 minutes without a request, and the first request after that can take about a minute. The backend prevents this: every 5 minutes it calls its own `/health` address (`KeepAlive.java`, using Render's `RENDER_EXTERNAL_URL`), so it stays awake. Set the environment variable `KEEP_ALIVE=off` to turn this off.
+- Staying awake all day uses almost all of the free 750 instance hours per month. That is enough for one free web service, not for two.
 - Free Render Postgres has limits (it can expire after some time). Check Render's current pricing page, and use a paid database for anything permanent.
 - Not in this backend yet: `POST /api/run` (the generate → evaluate → regenerate lesson loop).
