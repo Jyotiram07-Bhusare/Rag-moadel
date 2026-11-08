@@ -31,9 +31,9 @@ Speed controls the animation pace of a full 3-draft run (measured):
 | **Thinking row** | While it works: a live status ("Writing the lesson…", "Checking draft 1 · rule 7 of 14", "Rewriting the lesson · draft 2 of 3"). Afterwards: "Passed all 14 checks · 3 drafts · 3s". Click it to open the **rejection log**: per draft, which checks failed, why, the offending quote, what changed on retry, and the exact instructions sent to the writer. |
 | **Under the lesson** | Copy (formatted, pastes cleanly into Google Docs or Notion), 👍 / 👎 reviewer feedback (saved to memory), write it again, and a **⋯** menu: copy Markdown, download `.md`, print / PDF, export the rejection log as `.md` or `.json`. |
 | **Held for human review** | If the retry cap is hit, the best draft is shown with a warning that it was **not released as final**. It is never shipped by default. |
-| **Header: LessonLoop ▾** | **Careful** (up to 2 rewrites) or **Quick** (1 rewrite). Quick is the easy way to see the "held for human review" path. |
-| **＋ in the message box** | Turn **memory** on or off, or open Settings. |
-| **Settings** (profile, bottom left) | **General**: theme, lesson mode, memory, engine (demo / live backend), demo speed. **Memory**: learned rules, failure counts, rubric suggestions, run history, reviewer notes, promotion threshold, export, clear. **Quality checks**: the 14 checks in 6 dimensions with their pass conditions. **Data & developer**: export or delete chats, and links to the developer dashboard. |
+| **＋ in the message box** | **Upload PDF or image** (a simple RAG explanation of your file; needs the Java backend) and the **LessonLoop mode**: **Careful** (up to 2 rewrites) or **Quick** (1 rewrite). Quick is the easy way to see the "held for human review" path. |
+| **Sidebar** | New chat, Search chats, **Memory** and **Settings**. |
+| **Settings** | **General**: theme, lesson mode, memory, engine (demo / live backend), demo speed. **Memory**: learned rules, failure counts, rubric suggestions, run history, reviewer notes, promotion threshold, export, clear. **Quality checks**: the 14 checks in 6 dimensions with their pass conditions. **Data & developer**: export or delete chats, and links to the developer dashboard. |
 | **Developer dashboard** (`dashboard.html`) | The original step-by-step view: animated pipeline, **Evaluator lab** (inject a deliberate error and watch the evaluator reject it), rubric, memory, and the **How it works** architecture page. It is not linked from the chat page, only from Settings → Data & developer. |
 
 Keyboard: **Enter** sends, **Shift+Enter** adds a new line, **Ctrl/⌘+K** searches chats,
@@ -46,10 +46,24 @@ Keyboard: **Enter** sends, **Shift+Enter** adds a new line, **Ctrl/⌘+K** searc
 | **Demo engine** (default) | Runs in the browser. Drafts are pre-written, some with planted flaws. The **evaluator really reads the text** (rule-based). | Working on the UI, recording the demo, no API key needed. |
 | **Live backend** | `POST /api/run` to your Python / LangGraph / n8n service and reads Server-Sent Events. | The real submission. Set the URL in **Settings → General → Engine**. |
 
-> **Honest limits of the demo engine:** it has no LLM and only knows the topic
-> "Introduction to RAG". Ask for anything else and the chat says so and points to Settings.
+> **Honest limits of the demo engine:** it has no LLM and writes only the lesson
+> "Introduction to RAG". Anything that is not about RAG gets one line: "Please ask me about only RAG model."
 > The prompt shown for each draft is what a real LLM *would* receive; in demo mode nothing
 > consumes it. Learned rules make the demo's first draft cleaner, imitating what a real model would do.
+
+## The RAG library (info, examples and YouTube videos)
+
+In the demo chat you can also ask for ready-made RAG material in English, Hindi or Marathi. It is stored in `js/rag-kb.js`, so it works without a backend.
+
+| Ask | You get |
+|---|---|
+| `RAG in Marathi`, `RAG in Hindi`, `RAG in English` | A simple explanation: full form, short info, how it works step by step, advantages, an important note |
+| `Best RAG examples`, `RAG examples in Hindi` | 10 real-life examples: support bots, HR helpdesk, medical and finance assistants, chat with your own files and more |
+| `RAG YouTube videos`, `hindi videos`, `english videos`, `marathi videos` | Checked YouTube links with channel, length and level (6 English, 10 Hindi, 2 Marathi) |
+| A short follow-up such as `hindi` or `examples` | The same kind of answer in the other language |
+
+The video details were checked on 2026-11-08. [`../docs/RAG-RESOURCES.md`](../docs/RAG-RESOURCES.md) has the same material as a written list.
+To add a video, add one line to `VIDEOS` in `js/rag-kb.js`, then run `node docs/make-rag-resources.js` from the repo root.
 
 ## Suggested Loom walkthrough (15–20 min)
 
@@ -104,6 +118,7 @@ js/engine.js        demo engine + remote (SSE) engine, prompt builder, rejection
 js/chat-store.js    chat history and chat preferences (localStorage)
 js/chat-ui.js       chat helpers: icons, toasts, popover menus, confirm dialog, clipboard
 js/chat.js          chat page: state, run pipeline, streaming, thinking row, settings, search
+js/rag-kb.js        the RAG library: info, examples and YouTube videos in English, Hindi and Marathi
 js/app.js           dashboard: state, event reducer, rendering, interactions
 ```
 

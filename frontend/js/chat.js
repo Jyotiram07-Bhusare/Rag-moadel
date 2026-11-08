@@ -34,6 +34,7 @@
     ui: { think: {}, prompts: {}, feedback: null, renaming: null, search: { q: '', idx: 0 } },
     pinned: true,                // keep the view glued to the newest text
     settingsTab: 'general',
+    kbLast: null,                // the last RAG-library answer: { chatId, lang }, so "hindi" or "videos" can follow it
   };
 
   /* ================= helpers ================= */
@@ -207,7 +208,7 @@
     if (state.engine.engine === 'remote') {
       return [DEFAULT_TOPIC, 'How does the internet work?', 'What is an API?', 'Explain machine learning'];
     }
-    return [DEFAULT_TOPIC];
+    return [DEFAULT_TOPIC, 'RAG in Marathi', 'RAG in Hindi', 'Best RAG examples', 'RAG YouTube videos'];
   }
 
   function renderChrome() {
@@ -220,7 +221,7 @@
       : '';
     $('#foot-note').textContent = state.engine.engine === 'remote'
       ? 'LessonLoop checks every lesson against 14 rules before showing it. It can still make mistakes, so check important facts.'
-      : `Demo mode: only “${DEFAULT_TOPIC}” is available. The drafts are pre-written, but every check runs live.`;
+      : `Demo mode: the lesson is “${DEFAULT_TOPIC}” (drafts pre-written, checks run live). You can also ask for RAG info, examples or YouTube videos in English, Hindi or Marathi.`;
     document.title = chat ? shorten(chat.title, 60) + ' · LessonLoop' : 'LessonLoop';
     $('#composer-input').placeholder = PHONE.matches ? 'Type a topic…' : 'Type a topic, e.g. Introduction to RAG'; // a long placeholder would wrap on a phone
     renderComposerState();
@@ -659,12 +660,18 @@
   const GREETING = /^(hi+|hello+|hey+|hola|namaste|yo|help|thanks|thank you|thx|who are you\??|what can you do\??|what is this\??)[\s!.?]*$/i;
 
   // "RAG" as a whole word, or its full name. Words that only start with "rag" (rage, ragged) do not count.
-  const RAG_TOPIC = /\brags?\b|retrieval[\s-]*augmented/i;
+  const RAG_TOPIC = /\brags?\b|retrieval[\s-]*augmented|रॅग|रैग/i;
   const RAG_ONLY_REPLY = 'Please ask me about only RAG model.';
 
-  function quickReply(text) {
+  function quickReply(text, chat) {
+    const demo = state.engine.engine === 'demo';
+    // The RAG library (js/rag-kb.js) answers "RAG in Marathi", "RAG examples in Hindi", "RAG YouTube videos" ...
+    const last = state.kbLast && chat && state.kbLast.chatId === chat.id ? state.kbLast : null;
+    const ask = LL.ragKb ? LL.ragKb.parse(text, { demo, last }) : null;
+    if (ask && ask.lesson) return null;                // "Introduction to RAG": run the lesson loop
+    if (ask) return LL.ragKb.answer(ask);
     // The demo chat is about RAG only: anything else, even "hi", gets this one short line.
-    if (state.engine.engine === 'demo') return RAG_TOPIC.test(text) ? null : { text: RAG_ONLY_REPLY };
+    if (demo) return RAG_TOPIC.test(text) ? null : { text: RAG_ONLY_REPLY };
     if (GREETING.test(text)) {
       return {
         text: [
@@ -695,9 +702,10 @@
     renderSidebar(); renderChrome();
     scrollToBottom(false);
 
-    const quick = quickReply(text);
+    const quick = quickReply(text, chat);
     if (quick) {
-      const am = { id: uid(), role: 'assistant', kind: 'info', ts: Date.now(), text: quick.text, suggest: quick.suggest, buttons: quick.buttons };
+      if (quick.kb) state.kbLast = { chatId: chat.id, lang: quick.kb.lang };
+      const am ={ id: uid(), role: 'assistant', kind: 'info', ts: Date.now(), text: quick.text, suggest: quick.suggest, buttons: quick.buttons };
       chat.messages.push(am);
       renderMessage(am, true);
       stickIfPinned();

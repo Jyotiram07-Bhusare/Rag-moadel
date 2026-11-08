@@ -205,6 +205,8 @@ h1, h2, h3, h4, p { margin: 0; }
 .prose li::marker { color: var(--text-2); }
 .prose blockquote { margin: 0 0 20px; padding: 2px 0 2px 16px; border-left: 3px solid var(--border-strong); color: var(--text-2); }
 .prose code { padding: .15em .4em; border-radius: 6px; background: var(--bg-active); font: .875em var(--mono); }
+.prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.prose a:hover { text-decoration-thickness: 2px; }
 
 .caret { display: inline-block; width: .62em; height: .62em; margin-left: 4px; border-radius: 50%; background: var(--text); vertical-align: baseline; animation: caret 1s ease-in-out infinite; }
 

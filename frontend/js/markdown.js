@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------
    markdown.js — tiny, safe markdown → HTML renderer for lessons.
-   Supports: # / ## / ###, > quotes, - lists, 1. lists, **bold**, *italic*, `code`.
+   Supports: # / ## / ###, > quotes, - lists, 1. lists, **bold**, *italic*, `code`, [links](https://...).
    Everything is HTML-escaped first, so lesson text can never inject markup.
 ------------------------------------------------------------------- */
 (function (LL) {
@@ -10,7 +10,9 @@
   const inline = s => esc(s)
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // [text](https://...) becomes a link that opens in a new tab. Only https links are allowed, and the text was escaped above.
+    .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   LL.esc = esc;
